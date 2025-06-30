@@ -44,8 +44,7 @@ x-init-ollama: &init-ollama
     - ollama_storage:/root/.ollama
   entrypoint: /bin/sh
   environment:
-    - OLLAMA_HOST=ollama:11434
-  command:
+    - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
     - "-c"
     - "sleep 3; ollama pull llama3.2"
 
