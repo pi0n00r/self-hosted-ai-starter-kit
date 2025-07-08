@@ -8,8 +8,7 @@ volumes:
 networks:
   demo:
 x-n8n: &service-n8n
-image: n8nio/n8n:latest
-
+  image: n8nio/n8n:latest
   networks: ['demo']
   environment:
     - DB_TYPE=postgresdb
@@ -22,7 +21,6 @@ image: n8nio/n8n:latest
     - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
     - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
     - N8N_EXTERNAL_PACKAGES=cheerio
-
   env_file:
     - .env
 
@@ -111,7 +109,7 @@ services:
       - qdrant_storage:/qdrant/storage
     environment:
       - QDRANT__TELEMETRY_DISABLED=true
-        
+
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
@@ -182,7 +180,6 @@ services:
       - ollama-gpu
 
   ollama-pull-llama-gpu-amd:
-    profiles: ["gpu-amd"]
     <<: *init-ollama
     image: ollama/ollama:rocm
     depends_on:
