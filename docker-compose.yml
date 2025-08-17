@@ -166,6 +166,9 @@ services:
     privileged: true
     environment:
       - EGL_PLATFORM=surfaceless
+      - OLLAMA_INTEL_GPU=true
+      - ONEAPI_DEVICE_SELECTOR=level_zero:0
+      - LIBVA_DRIVER_NAME=iHD
 
   ollama-pull-llama-cpu:
     profiles: ["cpu"]
