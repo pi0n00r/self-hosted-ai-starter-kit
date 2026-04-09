@@ -6,7 +6,7 @@ volumes:
 
 networks:
   demo:
-  
+
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
   networks: ['demo']
@@ -108,9 +108,7 @@ services:
       - 6333:6333
     volumes:
       - qdrant_storage:/qdrant/storage
-    environment:
-#      - QDRANT__TELEMETRY_DISABLED=true
-    
+
   ollama-cpu:
     profiles: ["cpu"]
     <<: *service-ollama
@@ -137,20 +135,24 @@ services:
   ollama-intel:
     profiles: ["gpu-intel"]
     <<: *service-ollama
-   build:
-     context: .
-     dockerfile: Dockerfile.intel
+    # 'build' overrides inherited 'image' from x-ollama anchor.
+    # Explicitly naming the built image avoids ambiguity.
+    image: ollama-intel:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.intel
     container_name: ollama-intel
     ports:
       - "11434:11434"
     devices:
       - "/dev/dri:/dev/dri"
+    # privileged required for Level Zero iGPU device access inside the container.
+    # Reduce attack surface by scoping to gpu-intel profile only.
     privileged: true
     environment:
       - EGL_PLATFORM=surfaceless
       - OLLAMA_INTEL_GPU=true
       - ONEAPI_DEVICE_SELECTOR=level_zero:0
-      - LIBVA_DRIVER_NAME=iHD
 
   ollama-pull-llama-cpu:
     profiles: ["cpu"]
@@ -169,11 +171,15 @@ services:
     <<: *init-ollama
     image: ollama/ollama:rocm
     depends_on:
-     - ollama-gpu-amd
+      - ollama-gpu-amd
 
   ollama-pull-llama-intel:
     profiles: ["gpu-intel"]
     <<: *init-ollama
-   image: intelanalytics/ipex-llm-inference-cpp-xpu:latest
+    # Uses the same built image as ollama-intel so the ollama binary
+    # and oneAPI environment are identical. The init container only
+    # runs 'ollama pull' against the already-running ollama-intel service.
+    image: ollama-intel:latest
+    container_name: ollama-pull-llama-intel
     depends_on:
       - ollama-intel
