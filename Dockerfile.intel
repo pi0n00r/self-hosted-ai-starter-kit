@@ -1,24 +1,38 @@
 FROM ubuntu:24.04
- 
-# 1) Install Intel CPU-side oneAPI libs
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    intel-oneapi-mkl \
-    intel-oneapi-tbb \
-    intel-oneapi-openmp \
-    intel-oneapi-dnnl \
- && rm -rf /var/lib/apt/lists/*
- 
-# 2) Add pinned Intel GPU runtime .debs BEFORE any other GPU packages.
+
+# 1) Configure Intel's oneAPI repository for the CPU-side runtime libraries.
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates curl gnupg \
+ && curl -fsSL \
+      https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
+      -o /tmp/intel-oneapi.asc \
+ && gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg \
+      /tmp/intel-oneapi.asc \
+ && rm /tmp/intel-oneapi.asc \
+ && echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
+    > /etc/apt/sources.list.d/oneAPI.list
+
+# 2) Add pinned Intel GPU runtime .debs before any other GPU packages.
 #    Versions are pinned and held to prevent apt upgrades from pulling in
 #    incompatible IGC or Level Zero releases that break SYCL device enumeration.
 COPY intel-igc-core-2_2.14.1+19448_amd64.deb \
      intel-igc-opencl-2_2.14.1+19448_amd64.deb \
      libze-intel-gpu1_25.27.34303.5-0_amd64.deb /tmp/
- 
-RUN dpkg -i /tmp/intel-igc-core-2_2.14.1+19448_amd64.deb \
-          /tmp/intel-igc-opencl-2_2.14.1+19448_amd64.deb \
-          /tmp/libze-intel-gpu1_25.27.34303.5-0_amd64.deb \
- && apt-mark hold intel-igc-core intel-igc-opencl libze-intel-gpu1 \
+COPY intel-gpu-packages.sha256 /tmp/intel-gpu-packages.sha256
+
+RUN cd /tmp \
+ && sha256sum -c intel-gpu-packages.sha256 \
+ && apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      intel-oneapi-mkl \
+      intel-oneapi-tbb \
+      intel-oneapi-openmp \
+      intel-oneapi-dnnl \
+      /tmp/intel-igc-core-2_2.14.1+19448_amd64.deb \
+      /tmp/intel-igc-opencl-2_2.14.1+19448_amd64.deb \
+      /tmp/libze-intel-gpu1_25.27.34303.5-0_amd64.deb \
+ && apt-mark hold intel-igc-core-2 intel-igc-opencl-2 libze-intel-gpu1 \
  # Remove VAAPI/media drivers that conflict with headless SYCL inference.
  # These cause silent CPU fallback if present — do not re-add.
  && apt-get purge -y --auto-remove \
@@ -26,7 +40,7 @@ RUN dpkg -i /tmp/intel-igc-core-2_2.14.1+19448_amd64.deb \
       intel-media-va-driver-non-free libmfx1 libmfxgen1 libvpl2 \
       mesa-utils libegl1-mesa libgl1-mesa-dri vainfo \
       intel-oneapi-runtime-compilers intel-oneapi-runtime-dpcpp \
- && rm -rf /var/lib/apt/lists/* /tmp/*.deb
+ && rm -rf /var/lib/apt/lists/* /tmp/*.deb /tmp/intel-gpu-packages.sha256
  
 # 3) Headless EGL + Level Zero environment defaults.
 #    LIBVA_DRIVER_NAME is intentionally omitted — the iHD VA-API stack
