@@ -48,15 +48,17 @@ Engineering world, handles large amounts of data safely.
 ```bash
 git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 ```
 
 ### Running n8n using Docker Compose
 
 #### For Nvidia GPU users
 
-```
+```bash
 git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose --profile gpu-nvidia up
 ```
 
@@ -67,9 +69,10 @@ docker compose --profile gpu-nvidia up
 
 ### For AMD GPU users on Linux
 
-```
+```bash
 git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose --profile gpu-amd up
 ```
 
@@ -88,40 +91,34 @@ If you want to run Ollama on your mac, check the
 [Ollama homepage](https://ollama.com/)
 for installation instructions, and run the starter kit as follows:
 
-```
+```bash
 git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose up
 ```
 
 ##### For Mac users running OLLAMA locally
 
 If you're running OLLAMA locally on your Mac (not in Docker), you need to modify the OLLAMA_HOST environment variable
-in the n8n service configuration. Update the x-n8n section in your Docker Compose file as follows:
 
-```yaml
-x-n8n: &service-n8n
-  # ... other configurations ...
-  environment:
-    # ... other environment variables ...
-    - OLLAMA_HOST=host.docker.internal:11434
-```
+1. Set OLLAMA_HOST to `host.docker.internal:11434` in your .env file.
+2. Additionally, after you see "Editor is now accessible via: <http://localhost:5678/>":
 
-Additionally, after you see "Editor is now accessible via: <http://localhost:5678/>":
-
-1. Head to <http://localhost:5678/home/credentials>
-2. Click on "Local Ollama service"
-3. Change the base URL to "http://host.docker.internal:11434/"
+    1. Head to <http://localhost:5678/home/credentials>
+    2. Click on "Local Ollama service"
+    3. Change the base URL to "http://host.docker.internal:11434/"
 
 #### For Intel GPU users
 
 This project now includes dedicated support for Intel Gen8+ GPUs (including Arc and integrated graphics) via VAAPI and OpenCL (oneAPI runtime).
 
-bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+```bash
+git clone --branch gpu-expanded https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # update the secrets and passwords before starting
 docker compose --profile gpu-intel up
-> [!NOTE] > ### 🖥️ Running Ollama with Intel GPUs (Arc & iGPU) > These steps complement the official Ollama Docker instructions by adding Intel-specific GPU support alongside the existing NVIDIA and AMD configurations.
+```
 
 > [!NOTE]
 > ### 🖥️ Running Ollama with Intel GPUs (Arc & iGPU)
@@ -162,14 +159,17 @@ sudo usermod -aG render,video $(whoami)
 
 # 4️⃣  Reboot so the i915 kernel module picks up the new firmware
 sudo reboot
+```
 </details>
 
 <details> <summary>🧩 Driver Troubleshooting: VAAPI Not Selecting iHD?</summary>
 
 If VAAPI defaults to the wrong driver (like i965), or vainfo gives errors like vaInitialize failed, you can force the correct Intel driver by setting this environment variable system-wide:
 
-bash
+```bash
 echo 'LIBVA_DRIVER_NAME=iHD' | sudo tee -a /etc/environment
+```
+
 Then reboot your system or restart the container.
 
 This ensures the Intel iHD driver is used for VAAPI, which is required for Gen8+ and Arc GPUs.
@@ -178,9 +178,10 @@ This ensures the Intel iHD driver is used for VAAPI, which is required for Gen8+
 
 #### For everyone else
 
-```
+```bash
 git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose --profile cpu up
 ```
 
@@ -219,15 +220,15 @@ language model and Qdrant as your vector store.
 
 ## 🚧 Experimental Release: Intel GPU Support
 
-> **Note:** Intel GPU support is available as an *experimental feature* in this branch (`compose-intel-gpu-and-build`).  
-> It's been tested on Ubuntu 22.04+ with Arc and Gen8+ iGPUs, using VAAPI and Intel OpenCL runtimes.  
+> **Note:** Intel GPU support is available as an *experimental feature* in this branch (`gpu-expanded`).
+> It's been tested on Ubuntu 22.04+ with Arc and Gen8+ iGPUs, using VAAPI and Intel OpenCL runtimes.
 > Bug reports and contributions welcome!
 
 Run it with:
 
 ```bash
 docker compose --profile gpu-intel up
-
+```
 
 ## Upgrading
 
@@ -254,7 +255,6 @@ docker compose create && docker compose --profile gpu-amd up
 * ### For Mac / Apple Silicon users
 
 ```bash
-docker compose build --pull
 docker compose pull
 docker compose create && docker compose up
 ```
@@ -353,3 +353,4 @@ To keep your fork in sync with the original repo, add the upstream remote and fe
 ```bash
 git remote add upstream https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 git fetch upstream
+```
