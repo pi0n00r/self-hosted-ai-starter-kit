@@ -1,6 +1,14 @@
 # Self-hosted AI starter kit
+
+> [!WARNING]
+> **The `gpu-expanded` branch is sunset and frozen.** It will receive no further
+> updates because the upstream IPEX-LLM project/runtime lineage has been
+> retired. This branch is preserved only as the legacy last-known-good (LKG)
+> reference path; no current runtime certification is implied. For maintained
+> Intel GPU paths, move to `gpu-localai` or `gpu-localai-openai`.
+
 <p align="center">
-  <img src="https://img.shields.io/badge/Intel_GPU-Ready-blue" alt="Intel GPU Ready" />
+  <img src="https://img.shields.io/badge/Intel_GPU-Legacy_LKG-lightgrey" alt="Intel GPU Legacy LKG" />
   <img src="https://img.shields.io/badge/NVIDIA_Supported-green" alt="NVIDIA Supported" />
   <img src="https://img.shields.io/badge/AMD_Supported-orange" alt="AMD Supported" />
   <img src="https://img.shields.io/badge/CPU_Only-Available-lightgrey" alt="CPU Only" />
@@ -111,7 +119,10 @@ If you're running OLLAMA locally on your Mac (not in Docker), you need to modify
 
 #### For Intel GPU users
 
-This project now includes dedicated support for Intel Gen8+ GPUs (including Arc and integrated graphics) via VAAPI and OpenCL (oneAPI runtime).
+This frozen legacy branch includes the former experimental path for Intel
+Gen8+ GPUs (including Arc and integrated graphics) via VAAPI and OpenCL
+(oneAPI runtime). For a maintained Intel path, use `gpu-localai` or
+`gpu-localai-openai`.
 
 ```bash
 git clone --branch gpu-expanded https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
@@ -220,9 +231,9 @@ language model and Qdrant as your vector store.
 
 ## 🚧 Experimental Release: Intel GPU Support
 
-> **Note:** Intel GPU support is available as an *experimental feature* in this branch (`gpu-expanded`).
-> It's been tested on Ubuntu 22.04+ with Arc and Gen8+ iGPUs, using VAAPI and Intel OpenCL runtimes.
-> Bug reports and contributions welcome!
+> **Legacy note:** Intel GPU support was developed as an *experimental feature*
+> in this branch (`gpu-expanded`). The branch is preserved as an LKG reference,
+> not as a currently maintained or certified runtime.
 
 Run it with:
 
@@ -348,7 +359,9 @@ can:
 
 ## Upstream
 
-To keep your fork in sync with the original repo, add the upstream remote and fetch its changes:
+This sunset branch is intentionally frozen and should not be synchronized with
+new upstream changes. For historical comparison only, you can add and fetch the
+original repository without merging it into this branch:
 
 ```bash
 git remote add upstream https://github.com/n8n-io/self-hosted-ai-starter-kit.git
