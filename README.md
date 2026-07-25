@@ -116,8 +116,13 @@ If you're running OLLAMA locally on your Mac (not in Docker), you need to modify
 
 The `gpu-localai` branch uses LocalAI's official Intel GPU image instead of the
 retired IPEX-LLM portable Ollama build. LocalAI exposes its Ollama-compatible
-API as `ollama:11434`, so the bundled n8n credential and workflow work without
-a second inference credential.
+API as `ollama:11434` for the bundled n8n workflow, which is a Basic LLM Chain
+and does not send tool definitions or tool calls. This keeps the included
+credential and basic chat workflow working without a second inference
+credential.
+
+This branch does not claim tool-calling compatibility through n8n's Ollama
+nodes. Certify that path separately before replacing an agent workflow's model.
 
 ```bash
 git clone --branch gpu-localai https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
