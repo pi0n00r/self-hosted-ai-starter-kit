@@ -22,7 +22,6 @@ x-n8n: &service-n8n
     N8N_PERSONALIZATION_ENABLED: "false"
     N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
     N8N_USER_MANAGEMENT_JWT_SECRET: ${N8N_USER_MANAGEMENT_JWT_SECRET}
-    OLLAMA_HOST: ${OLLAMA_HOST:-ollama:11434}
   env_file:
     - path: .env
       required: true
@@ -31,7 +30,9 @@ x-ollama: &service-ollama
   image: ollama/ollama:latest
   container_name: ollama
   networks:
-    - demo
+    demo:
+      aliases:
+        - inference
   restart: unless-stopped
   ports:
     - "11434:11434"
@@ -154,8 +155,8 @@ services:
     networks:
       demo:
         aliases:
-          # Preserve the bundled n8n Ollama credential and workflow.
-          - ollama
+          # Give every inference profile the same OpenAI-compatible endpoint.
+          - inference
     restart: unless-stopped
     ports:
       - "11434:11434"

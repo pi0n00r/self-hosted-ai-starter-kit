@@ -1,6 +1,6 @@
 # Self-hosted AI starter kit
 <p align="center">
-  <img src="https://img.shields.io/badge/Intel_GPU-Ready-blue" alt="Intel GPU Ready" />
+  <img src="https://img.shields.io/badge/Intel_GPU-Experimental-blue" alt="Intel GPU Experimental" />
   <img src="https://img.shields.io/badge/NVIDIA_Supported-green" alt="NVIDIA Supported" />
   <img src="https://img.shields.io/badge/AMD_Supported-orange" alt="AMD Supported" />
   <img src="https://img.shields.io/badge/CPU_Only-Available-lightgrey" alt="CPU Only" />
@@ -101,40 +101,37 @@ cp .env.example .env # you should update secrets and passwords inside
 docker compose up
 ```
 
-##### For Mac users running OLLAMA locally
+##### For Mac users running Ollama locally
 
-If you're running OLLAMA locally on your Mac (not in Docker), you need to modify the OLLAMA_HOST environment variable
+If you're running Ollama locally on your Mac rather than in Docker, wait until
+you see "Editor is now accessible via: <http://localhost:5678/>", then:
 
-1. Set OLLAMA_HOST to `host.docker.internal:11434` in your .env file.
-2. Additionally, after you see "Editor is now accessible via: <http://localhost:5678/>":
-
-    1. Head to <http://localhost:5678/home/credentials>
-    2. Click on "Local Ollama service"
-    3. Change the base URL to "http://host.docker.internal:11434/"
+1. Head to <http://localhost:5678/home/credentials>.
+2. Open "Local OpenAI-compatible service".
+3. Change its Base URL to `http://host.docker.internal:11434/v1`.
 
 #### For Intel GPU users
 
-The `gpu-localai` branch uses LocalAI's official Intel GPU image instead of the
-retired IPEX-LLM portable Ollama build. LocalAI exposes its Ollama-compatible
-API as `ollama:11434` for the bundled n8n workflow, which is a Basic LLM Chain
-and does not send tool definitions or tool calls. This keeps the included
-credential and basic chat workflow working without a second inference
-credential.
+The `gpu-localai-openai` branch uses LocalAI's official Intel GPU image instead
+of the retired IPEX-LLM portable Ollama build. The bundled n8n workflow connects
+to LocalAI through its OpenAI-compatible `/v1` API at the internal
+`inference:11434` service alias. No OpenAI cloud account or external API key is
+required.
 
-This branch does not claim tool-calling compatibility through n8n's Ollama
-nodes. Certify that path separately before replacing an agent workflow's model.
+The included workflow remains a Basic LLM Chain and does not send tool
+definitions or tool calls. This branch therefore does not claim n8n agent or
+tool-calling compatibility; certify that path separately before replacing an
+agent workflow's model.
 
-Builders evaluating that path can pair an Ollama client with
+Clients that already speak the OpenAI protocol connect directly to LocalAI.
+Builders evaluating an Ollama-only client can instead pair it with
 [pi0n00r/llm_proxy](https://github.com/pi0n00r/llm_proxy), which translates
-Ollama chat and tool-call traffic to an OpenAI-compatible backend. The proxy is
-an optional external component: it is not bundled or configured by this starter
-kit.
-
-The combined n8n Ollama node -> `llm_proxy` -> LocalAI Intel path remains
-unclaimed and uncertified until it passes an end-to-end tool-calling test.
+Ollama chat and tool-call traffic to an OpenAI-compatible backend. That proxy is
+an optional external component and is neither bundled nor certified with this
+starter kit.
 
 ```bash
-git clone --branch gpu-localai https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
+git clone --branch gpu-localai-openai https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
 cp .env.example .env # update the secrets and passwords before starting
 docker compose --profile gpu-intel up -d
@@ -167,7 +164,15 @@ Verify the API and GPU path:
 
 ```bash
 curl --fail http://localhost:11434/readyz
-curl --fail http://localhost:11434/api/tags
+curl --fail http://localhost:11434/v1/models
+curl --fail http://localhost:11434/v1/chat/completions \
+  --header 'Content-Type: application/json' \
+  --header 'Authorization: Bearer local-ai' \
+  --data '{
+    "model": "llama3.2",
+    "messages": [{"role": "user", "content": "Reply with: ready"}],
+    "stream": false
+  }'
 docker compose exec localai-intel sh -lc \
   'test -e /dev/dri/renderD128 && echo "Intel render device present"'
 ```
@@ -206,8 +211,9 @@ suite of basic and advanced AI nodes such as
 [AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
 [Text classifier](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.text-classifier/),
 and [Information Extractor](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.information-extractor/)
-nodes. To keep everything local, just remember to use the Ollama node for your
-language model and Qdrant as your vector store.
+nodes. To keep everything local, use the Ollama node on the standard branches,
+or the OpenAI Chat Model supplied by this branch, and Qdrant as your vector
+store.
 
 > [!NOTE]
 > This starter kit is designed to help you get started with self-hosted AI
@@ -221,7 +227,7 @@ language model and Qdrant as your vector store.
 ## 🚧 Experimental Release: Intel GPU Support
 
 > **Note:** LocalAI Intel GPU support is available as an experimental feature
-> in this branch (`gpu-localai`). The Compose and configuration paths are
+> in this branch (`gpu-localai-openai`). The Compose and configuration paths are
 > statically validated, but must still be runtime-certified on a host with an
 > Intel render device. Bug reports and contributions are welcome.
 
