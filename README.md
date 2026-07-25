@@ -124,6 +124,15 @@ credential.
 This branch does not claim tool-calling compatibility through n8n's Ollama
 nodes. Certify that path separately before replacing an agent workflow's model.
 
+Builders evaluating that path can pair an Ollama client with
+[pi0n00r/llm_proxy](https://github.com/pi0n00r/llm_proxy), which translates
+Ollama chat and tool-call traffic to an OpenAI-compatible backend. The proxy is
+an optional external component: it is not bundled or configured by this starter
+kit.
+
+The combined n8n Ollama node -> `llm_proxy` -> LocalAI Intel path remains
+unclaimed and uncertified until it passes an end-to-end tool-calling test.
+
 ```bash
 git clone --branch gpu-localai https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
