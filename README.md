@@ -22,8 +22,11 @@ quickly get started with building self-hosted AI workflows.
 ✅ [**Self-hosted n8n**](https://n8n.io/) - Low-code platform with over 400
 integrations and advanced AI components
 
-✅ [**Ollama**](https://ollama.com/) - Cross-platform LLM platform to install
-and run the latest local LLMs
+✅ [**Ollama**](https://ollama.com/) - Cross-platform LLM platform for the CPU,
+Nvidia, and AMD profiles
+
+✅ [**LocalAI**](https://localai.io/) - OpenAI- and Ollama-compatible local AI
+runtime used by the Intel GPU profile
 
 ✅ [**Qdrant**](https://qdrant.tech/) - Open-source, high performance vector
 store with an comprehensive API
@@ -111,70 +114,53 @@ If you're running OLLAMA locally on your Mac (not in Docker), you need to modify
 
 #### For Intel GPU users
 
-This project now includes dedicated support for Intel Gen8+ GPUs (including Arc and integrated graphics) via VAAPI and OpenCL (oneAPI runtime).
+The `gpu-localai` branch uses LocalAI's official Intel GPU image instead of the
+retired IPEX-LLM portable Ollama build. LocalAI exposes its Ollama-compatible
+API as `ollama:11434`, so the bundled n8n credential and workflow work without
+a second inference credential.
 
 ```bash
-git clone --branch gpu-expanded https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
+git clone --branch gpu-localai https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
 cp .env.example .env # update the secrets and passwords before starting
-docker compose --profile gpu-intel up
+docker compose --profile gpu-intel up -d
 ```
 
-> [!NOTE]
-> ### 🖥️ Running Ollama with Intel GPUs (Arc & iGPU)
-> Host preparation is now handled automatically by the setup script since `v0.2.0-experimental`.
->
-> _Need the old manual instructions? [View legacy steps ↓](#legacy-steps-manual-setup-pre-v020)_
-
-Once containers are running, access the UI at: http://localhost:5678
-
-<details> <summary>✅ Intel GPU Validation Checklist</summary>
-
-Confirm access with vainfo and clinfo
-
-</details>
-
----
-
-### 🧰 Host preparation (Ubuntu 22.04 / 24.04)
-
-> _(Host preparation is done automatically by the script since `v0.2.0-experimental`)_
-
-<details>
-  <summary>Legacy steps (manual setup, pre v0.2.0)</summary>
+The host must expose an Intel render device:
 
 ```bash
-# 1️⃣  Update packages
-sudo apt update
-
-# 2️⃣  Install Intel media / OpenCL / Level-Zero runtimes
-sudo apt install -y \
-  intel-media-va-driver-non-free \   # VA-API driver (iHD)
-  intel-opencl-icd \                 # OpenCL runtime
-  intel-level-zero-gpu \             # oneAPI Level-Zero
-  libmfx1 vainfo clinfo              # misc tools
-
-# 3️⃣  Grant the current user access to the render & video groups
-sudo usermod -aG render,video $(whoami)
-
-# 4️⃣  Reboot so the i915 kernel module picks up the new firmware
-sudo reboot
+test -e /dev/dri/renderD128
 ```
-</details>
 
-<details> <summary>🧩 Driver Troubleshooting: VAAPI Not Selecting iHD?</summary>
+The Compose profile passes `/dev/dri` into
+`localai/localai:v4.7.1-gpu-intel` without granting the container privileged
+access. It persists model and application data in the `localai_models` and
+`localai_data` volumes. The included model definition:
 
-If VAAPI defaults to the wrong driver (like i965), or vainfo gives errors like vaInitialize failed, you can force the correct Intel driver by setting this environment variable system-wide:
+- imports `llama3.2` from the Ollama registry;
+- offloads all available layers to the Intel GPU;
+- disables `mmap`, which LocalAI documents as unsafe for Intel SYCL; and
+- uses one CPU thread while inference is GPU-offloaded.
+
+The first model request can take several minutes while LocalAI downloads the
+model and Intel backend. Follow startup with:
 
 ```bash
-echo 'LIBVA_DRIVER_NAME=iHD' | sudo tee -a /etc/environment
+docker compose --profile gpu-intel logs -f localai-intel
 ```
 
-Then reboot your system or restart the container.
+Verify the API and GPU path:
 
-This ensures the Intel iHD driver is used for VAAPI, which is required for Gen8+ and Arc GPUs.
+```bash
+curl --fail http://localhost:11434/readyz
+curl --fail http://localhost:11434/api/tags
+docker compose exec localai-intel sh -lc \
+  'test -e /dev/dri/renderD128 && echo "Intel render device present"'
+```
 
-</details>
+A successful readiness probe proves that LocalAI is serving. Confirm Intel
+offload separately in the LocalAI logs; readiness alone does not prove that the
+model avoided CPU fallback.
 
 #### For everyone else
 
@@ -196,8 +182,8 @@ After completing the installation steps above, simply follow the steps below to 
    <http://localhost:5678/workflow/srOnR8PAY3u4RSwb>
 3. Click the **Chat** button at the bottom of the canvas, to start running the workflow.
 4. If this is the first time you’re running the workflow, you may need to wait
-   until Ollama finishes downloading Llama3.2. You can inspect the docker
-   console logs to check on the progress.
+   until the selected inference runtime finishes downloading Llama3.2. You can
+   inspect the Docker console logs to check on the progress.
 
 To open n8n at any time, visit <http://localhost:5678/> in your browser.
 
@@ -220,9 +206,10 @@ language model and Qdrant as your vector store.
 
 ## 🚧 Experimental Release: Intel GPU Support
 
-> **Note:** Intel GPU support is available as an *experimental feature* in this branch (`gpu-expanded`).
-> It's been tested on Ubuntu 22.04+ with Arc and Gen8+ iGPUs, using VAAPI and Intel OpenCL runtimes.
-> Bug reports and contributions welcome!
+> **Note:** LocalAI Intel GPU support is available as an experimental feature
+> in this branch (`gpu-localai`). The Compose and configuration paths are
+> statically validated, but must still be runtime-certified on a host with an
+> Intel render device. Bug reports and contributions are welcome.
 
 Run it with:
 
@@ -232,9 +219,9 @@ docker compose --profile gpu-intel up
 
 ## Upgrading
 
-> Always run `docker compose build --pull` first.  
-> It rebuilds local images **and** pulls newer tags for every
-> service in the stack, regardless of profile.
+The Intel profile uses a versioned LocalAI image and does not build a local
+inference image. Pull the image for the selected profile before recreating its
+services.
 
 * ### For NVIDIA GPU setups:
 
@@ -262,7 +249,6 @@ docker compose create && docker compose up
 * ### For Intel GPU users
 
 ```bash
-docker compose build --pull --profile gpu-intel
 docker compose --profile gpu-intel pull
 docker compose create && docker compose --profile gpu-intel up
 ```

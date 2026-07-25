@@ -2,6 +2,8 @@ volumes:
   n8n_storage:
   postgres_storage:
   ollama_storage:
+  localai_models:
+  localai_data:
   qdrant_storage:
 
 networks:
@@ -145,31 +147,36 @@ services:
       - /dev/kfd
       - /dev/dri
 
-  ollama-intel:
+  localai-intel:
     profiles: ["gpu-intel"]
-    <<: *service-ollama
-    # 'build' overrides inherited 'image' from x-ollama anchor.
-    # Explicitly naming the built image avoids ambiguity.
-    image: ollama-intel:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.intel
-    container_name: ollama-intel
+    image: localai/localai:v4.7.1-gpu-intel
+    container_name: localai-intel
     networks:
       demo:
         aliases:
+          # Preserve the bundled n8n Ollama credential and workflow.
           - ollama
+    restart: unless-stopped
     ports:
       - "11434:11434"
     devices:
       - "/dev/dri:/dev/dri"
-    # privileged required for Level Zero iGPU device access inside the container.
-    # Reduce attack surface by scoping to gpu-intel profile only.
-    privileged: true
     environment:
-      EGL_PLATFORM: surfaceless
-      OLLAMA_INTEL_GPU: "true"
-      ONEAPI_DEVICE_SELECTOR: level_zero:0
+      LOCALAI_ADDRESS: ":11434"
+      LOCALAI_MODELS_PATH: /models
+      LOCALAI_DATA_PATH: /data
+      LOCALAI_F16: "true"
+      LOCALAI_THREADS: "1"
+    volumes:
+      - localai_models:/models
+      - localai_data:/data
+      - ./localai/models/llama3.2.yaml:/models/llama3.2.yaml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/readyz"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 10m
 
   ollama-pull-llama-cpu:
     profiles: ["cpu"]
@@ -189,14 +196,3 @@ services:
     image: ollama/ollama:rocm
     depends_on:
       - ollama-gpu-amd
-
-  ollama-pull-llama-intel:
-    profiles: ["gpu-intel"]
-    <<: *init-ollama
-    # Uses the same built image as ollama-intel so the ollama binary
-    # and oneAPI environment are identical. The init container only
-    # runs 'ollama pull' against the already-running ollama-intel service.
-    image: ollama-intel:latest
-    container_name: ollama-pull-llama-intel
-    depends_on:
-      - ollama-intel
