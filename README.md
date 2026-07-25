@@ -1,6 +1,14 @@
 # Self-hosted AI starter kit
+
+> [!WARNING]
+> **Sunset branch:** `gpu-expanded-with-webui` is frozen at this legacy
+> last-known-good baseline and receives no further updates because its Intel
+> path depends on the retired upstream IPEX-LLM runtime lineage. No current
+> runtime certification is implied. For maintained Intel GPU paths, move to
+> `gpu-localai` or `gpu-localai-openai`.
+
 <p align="center">
-  <img src="https://img.shields.io/badge/Intel_GPU-Ready-blue" alt="Intel GPU Ready" />
+  <img src="https://img.shields.io/badge/Intel_GPU-Legacy_LKG-lightgrey" alt="Intel GPU Legacy LKG" />
   <img src="https://img.shields.io/badge/NVIDIA_Supported-green" alt="NVIDIA Supported" />
   <img src="https://img.shields.io/badge/AMD_Supported-orange" alt="AMD Supported" />
   <img src="https://img.shields.io/badge/CPU_Only-Available-lightgrey" alt="CPU Only" />
@@ -48,28 +56,31 @@ Engineering world, handles large amounts of data safely.
 ```bash
 git clone https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 ```
 
 ### Running n8n using Docker Compose
 
 #### For Nvidia GPU users
 
-```
-git clone https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
+```bash
+git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose --profile gpu-nvidia up
 ```
 
 > [!NOTE]
 > If you have not used your Nvidia GPU with Docker before, please follow the
-> [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
+> [Ollama Docker instructions](https://docs.ollama.com/docker).
 
 
 ### For AMD GPU users on Linux
 
-```
-git clone https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
+```bash
+git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose --profile gpu-amd up
 ```
 
@@ -88,40 +99,36 @@ If you want to run Ollama on your mac, check the
 [Ollama homepage](https://ollama.com/)
 for installation instructions, and run the starter kit as follows:
 
-```
-git clone https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
+```bash
+git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose up
 ```
 
 ##### For Mac users running OLLAMA locally
 
 If you're running OLLAMA locally on your Mac (not in Docker), you need to modify the OLLAMA_HOST environment variable
-in the n8n service configuration. Update the x-n8n section in your Docker Compose file as follows:
 
-```yaml
-x-n8n: &service-n8n
-  # ... other configurations ...
-  environment:
-    # ... other environment variables ...
-    - OLLAMA_HOST=host.docker.internal:11434
-```
+1. Set OLLAMA_HOST to `host.docker.internal:11434` in your .env file.
+2. Additionally, after you see "Editor is now accessible via: <http://localhost:5678/>":
 
-Additionally, after you see "Editor is now accessible via: <http://localhost:5678/>":
-
-1. Head to <http://localhost:5678/home/credentials>
-2. Click on "Local Ollama service"
-3. Change the base URL to "http://host.docker.internal:11434/"
+    1. Head to <http://localhost:5678/home/credentials>
+    2. Click on "Local Ollama service"
+    3. Change the base URL to "http://host.docker.internal:11434/"
 
 #### For Intel GPU users
 
-This project now includes dedicated support for Intel Gen8+ GPUs (including Arc and integrated graphics) via VAAPI and OpenCL (oneAPI runtime).
+This frozen legacy branch preserves the former experimental Intel Gen8+ GPU
+path, including Arc and integrated graphics, via VAAPI, OpenCL, and IPEX-LLM.
+For a maintained Intel path, use `gpu-localai` or `gpu-localai-openai`.
 
-bash
-git clone https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
+```bash
+git clone --branch gpu-expanded-with-webui https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # update the secrets and passwords before starting
 docker compose --profile gpu-intel up
-> [!NOTE] > ### 🖥️ Running Ollama with Intel GPUs (Arc & iGPU) > These steps complement the official Ollama Docker instructions by adding Intel-specific GPU support alongside the existing NVIDIA and AMD configurations.
+```
 
 > [!NOTE]
 > ### 🖥️ Running Ollama with Intel GPUs (Arc & iGPU)
@@ -162,14 +169,17 @@ sudo usermod -aG render,video $(whoami)
 
 # 4️⃣  Reboot so the i915 kernel module picks up the new firmware
 sudo reboot
+```
 </details>
 
 <details> <summary>🧩 Driver Troubleshooting: VAAPI Not Selecting iHD?</summary>
 
 If VAAPI defaults to the wrong driver (like i965), or vainfo gives errors like vaInitialize failed, you can force the correct Intel driver by setting this environment variable system-wide:
 
-bash
+```bash
 echo 'LIBVA_DRIVER_NAME=iHD' | sudo tee -a /etc/environment
+```
+
 Then reboot your system or restart the container.
 
 This ensures the Intel iHD driver is used for VAAPI, which is required for Gen8+ and Arc GPUs.
@@ -178,9 +188,10 @@ This ensures the Intel iHD driver is used for VAAPI, which is required for Gen8+
 
 #### For everyone else
 
-```
-git clone https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
+```bash
+git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
+cp .env.example .env # you should update secrets and passwords inside
 docker compose --profile cpu up
 ```
 
@@ -219,15 +230,15 @@ language model and Qdrant as your vector store.
 
 ## 🚧 Experimental Release: Intel GPU Support
 
-> **Note:** Intel GPU support is available as an *experimental feature* in this branch (`compose-intel-gpu-and-build`).  
-> It's been tested on Ubuntu 22.04+ with Arc and Gen8+ iGPUs, using VAAPI and Intel OpenCL runtimes.  
-> Bug reports and contributions welcome!
+> **Legacy note:** Intel GPU support was developed as an *experimental feature*
+> in this branch (`gpu-expanded-with-webui`). The branch is preserved as an LKG
+> reference, not as a currently maintained or certified runtime.
 
 Run it with:
 
 ```bash
 docker compose --profile gpu-intel up
-
+```
 
 ## Upgrading
 
@@ -254,7 +265,6 @@ docker compose create && docker compose --profile gpu-amd up
 * ### For Mac / Apple Silicon users
 
 ```bash
-docker compose build --pull
 docker compose pull
 docker compose create && docker compose up
 ```
@@ -348,8 +358,11 @@ can:
 
 ## Upstream
 
-To keep your fork in sync with the original repo, add the upstream remote and fetch its changes:
+This sunset branch is intentionally frozen and should not be synchronized with
+new upstream changes. For historical comparison only, you can add and fetch the
+original repository without merging it into this branch:
 
 ```bash
 git remote add upstream https://github.com/n8n-io/self-hosted-ai-starter-kit.git
 git fetch upstream
+```
