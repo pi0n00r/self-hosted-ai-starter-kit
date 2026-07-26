@@ -1,6 +1,6 @@
 # Self-hosted AI starter kit
 <p align="center">
-  <img src="https://img.shields.io/badge/Intel_GPU-Experimental-blue" alt="Intel GPU Experimental" />
+  <img src="https://img.shields.io/badge/Intel_GPU-LocalAI_4.7.1-green" alt="Intel GPU with LocalAI 4.7.1" />
   <img src="https://img.shields.io/badge/NVIDIA_Supported-green" alt="NVIDIA Supported" />
   <img src="https://img.shields.io/badge/AMD_Supported-orange" alt="AMD Supported" />
   <img src="https://img.shields.io/badge/CPU_Only-Available-lightgrey" alt="CPU Only" />
@@ -224,12 +224,13 @@ store.
 
 ---
 
-## 🚧 Experimental Release: Intel GPU Support
+## Intel GPU Support with LocalAI
 
-> **Note:** LocalAI Intel GPU support is available as an experimental feature
-> in this branch (`gpu-localai-openai`). The Compose and configuration paths are
-> statically validated, but must still be runtime-certified on a host with an
-> Intel render device. Bug reports and contributions are welcome.
+> [!NOTE]
+> The `gpu-intel` profile uses LocalAI's official, versioned Intel GPU image;
+> it does not build or maintain a custom inference image. The runtime path has
+> been production-validated with an Intel render device, SYCL GPU offload, and
+> n8n through LocalAI's OpenAI-compatible API. Other profiles remain unchanged.
 
 Run it with:
 
