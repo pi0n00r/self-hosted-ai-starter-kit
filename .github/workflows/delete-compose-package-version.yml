@@ -70,15 +70,33 @@ jobs:
 
       - name: Delete exact superseded manifest
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGE_TAG: ${{ inputs.tag }}
           EXPECTED_DIGEST: ${{ inputs.expected_digest }}
         run: |
           set -euo pipefail
           actual_digest="$(oras resolve "$IMAGE_NAME:$PACKAGE_TAG")"
           test "$actual_digest" = "$EXPECTED_DIGEST"
-          oras manifest delete "$IMAGE_NAME@$EXPECTED_DIGEST" --force
 
-          if oras resolve "$IMAGE_NAME:$PACKAGE_TAG" >/dev/null 2>&1; then
-            echo "Package tag still resolves after deletion" >&2
-            exit 1
-          fi
+          versions="$(
+            gh api --paginate \
+              /users/pi0n00r/packages/container/self-hosted-ai-starter-kit/versions |
+              jq -sc --arg tag "$PACKAGE_TAG" \
+                '[.[][] | select(.metadata.container.tags | index($tag))]'
+          )"
+          test "$(jq length <<<"$versions")" -eq 1
+
+          version_id="$(jq -r '.[0].id' <<<"$versions")"
+          version_digest="$(jq -r '.[0].name' <<<"$versions")"
+          test "sha256:${version_digest#sha256:}" = "$EXPECTED_DIGEST"
+
+          gh api --method DELETE \
+            "/users/pi0n00r/packages/container/self-hosted-ai-starter-kit/versions/$version_id"
+
+          remaining="$(
+            gh api --paginate \
+              /users/pi0n00r/packages/container/self-hosted-ai-starter-kit/versions |
+              jq -sc --arg tag "$PACKAGE_TAG" \
+                '[.[][] | select(.metadata.container.tags | index($tag))] | length'
+          )"
+          test "$remaining" -eq 0
