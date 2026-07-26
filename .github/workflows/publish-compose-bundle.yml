@@ -50,13 +50,10 @@ jobs:
           EXPECTED_SHA: ${{ inputs.source_sha }}
         run: |
           set -euo pipefail
-          case "$RELEASE_TAG" in
-            v[0-9]*-experimental) ;;
-            *)
-              echo "Expected an explicit v*-experimental tag, found $RELEASE_TAG" >&2
-              exit 1
-              ;;
-          esac
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected a stable semantic version tag, found $RELEASE_TAG" >&2
+            exit 1
+          fi
 
           actual_sha="$(git rev-parse HEAD)"
           tag_sha="$(git rev-list -n 1 "refs/tags/$RELEASE_TAG")"
@@ -138,7 +135,7 @@ jobs:
             --annotation "org.opencontainers.image.revision=$SOURCE_SHA" \
             --annotation "org.opencontainers.image.version=$RELEASE_TAG" \
             --annotation "org.opencontainers.image.title=Self-hosted AI Starter Kit Compose bundle" \
-            --annotation "org.opencontainers.image.description=Experimental LocalAI OpenAI-compatible Intel GPU Compose bundle" \
+            --annotation "org.opencontainers.image.description=LocalAI OpenAI-compatible Intel GPU Compose bundle" \
             --annotation "org.opencontainers.image.licenses=Apache-2.0" \
             "$IMAGE_NAME:$RELEASE_TAG" \
             "$ARTIFACT:application/vnd.pi0n00r.compose.bundle.layer.v1.tar+gzip" \
