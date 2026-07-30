@@ -1,0 +1,9 @@
+{
+	"node": "n8n-nodes-local-ai",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["AI"],
+	"resources": {
+		"primaryDocumentation": []
+	}
+}

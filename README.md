@@ -130,6 +130,21 @@ Ollama chat and tool-call traffic to an OpenAI-compatible backend. That proxy is
 an optional external component and is neither bundled nor certified with this
 starter kit.
 
+The n8n image includes the internal `Local AI` language-model node. It appears
+under **AI > Language Models**, is available from AI-chain model connectors,
+and is searchable as `LocalAI` or `Local AI`.
+
+The image pins n8n `2.31.6` and embeds the versioned
+`n8n-nodes-local-ai-0.1.1.tgz` artifact. Its entrypoint installs that local
+artifact into n8n's normal community-node directory when the installed version
+is absent or stale. The install is offline and idempotent, so a clean
+`docker compose build --pull --no-cache n8n` restores the node even when
+`/home/node/.n8n` is a bind mount.
+
+Update `LOCAL_AI_NODE_PACKAGE` in `Dockerfile`, `package_version` in
+`n8n-with-local-ai.sh`, and the bundled release artifact together when
+upgrading the node.
+
 ```bash
 git clone --branch gpu-localai-openai https://github.com/pi0n00r/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit

@@ -10,7 +10,9 @@ networks:
   demo:
 
 x-n8n: &service-n8n
-  image: n8nio/n8n:latest
+  build:
+    context: .
+    dockerfile: Dockerfile
   networks:
     - demo
   environment:
